@@ -30,12 +30,14 @@ class MyAI(Alg3D):
         # 座標の若いところに置くと自動的に相手が置く可能性が高まることから座標の大きいところに優先的に置く。
         if(len(self.logical_lv1_possible_3Dpoints) == 0):
             print("論理的着手可能点Lv1がありません")
-            z,y,x = self.place_max(self.memoryST_physical_possible_3Dpoints[tmp_len-1])
+            z,y,x = self.place_max(self.memoryST_physical_possible_3Dpoints)
             print(f"物理的着手可能点に配置します (z,y,x)=({z},{y},{x})")
             return (x,y)
         
         ## 現状の最善手。
-        z,y,x = self.place_max(self.logical_lv1_possible_3Dpoints)            
+        z,y,x = self.place_max(self.logical_lv1_possible_3Dpoints)
+        if(self.is_posible_to_place(z,y,x) == False):
+            print(f"{z},{y},{x}はおけない。")     
         return (x,y)
 
     ############### 一括初期化処理 ################
@@ -98,7 +100,7 @@ class MyAI(Alg3D):
         # self.boardを走査して、物理的に置ける場所を探す。
         for z,y,x in [(z,y,x) for z in range(4) for y in range(4) for x in range(4)]:
             if(self.is_posible_to_place(z,y,x)):
-                self.memoryST_physical_possible_3Dpoints.append((z,x,y))
+                self.memoryST_physical_possible_3Dpoints.append((z,y,x))
     
     def get_basekey_for_check(self, idx_check_target_rowType , idx_targetKey_z, idx_targetKey_y, idx_targetKey_x) -> int:
         return idx_check_target_rowType*10000 + idx_targetKey_z*1000 + idx_targetKey_y*100 + idx_targetKey_x*10
