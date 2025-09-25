@@ -26,11 +26,9 @@ class MyAI(Alg3D):
                 print(f"必敗点を回避するために配置します (z,y,x)=({z},{y},{x})")
                 return (x,y)
 
-        # self.logical_lv1_possible_3Dpoints を計算しにいく。
-        self.caluculate_logical_lv1_possible_3Dpoints();
         if(len(self.logical_lv1_possible_3Dpoints) == 0):
             print("論理的着手可能点Lv1がありません")
-            z,y,x = self.memoryST_physical_possible_2Dpoints[0]
+            z,y,x = self.memoryST_physical_possible_3Dpoints[0]
             print(f"物理的着手可能点に配置します (z,y,x)=({z},{y},{x})")
             return (x,y)
         
@@ -43,8 +41,8 @@ class MyAI(Alg3D):
     # 自分の手番
     myPlayer : int
 
-    #物理的着手可能点(x,y)
-    memoryST_physical_possible_2Dpoints : List[Tuple[int,int]] = []
+    #物理的着手可能点(z,x,y)
+    memoryST_physical_possible_3Dpoints : List[Tuple[int,int,int]] = []
     #短期メモリーによる3D座標での必勝点
     memoryST_winInstant_3Dpoints : List[Tuple[int,int,int]] = []
     #短期メモリーによる3D座標での必敗点 ※おかないとだめ
@@ -76,13 +74,13 @@ class MyAI(Alg3D):
         print("test")
 
     ############### 初期化関数群 ################
-    def init_memoryST_physical_possible_2Dpoints(self):
-        self.memoryST_physical_possible_2Dpoints = []
+    def init_memoryST_physical_possible_3Dpoints(self):
+        self.memoryST_physical_possible_3Dpoints = []
         # @TODO: 高速化：過去の確認結果を踏まえる
-        for z,y,x ,value in self.board:
-            if(z == 3):
-                if(value == 0 or value == 3 or value == 4):
-                    self.memoryST_physical_possible_2Dpoints.append((x,y))
+        # self.boardを走査して、物理的に置ける場所を探す。
+        for z,y,x in [(z,y,x) for z in range(4) for y in range(4) for x in range(4)]:
+            if(self.is_posible_to_place(z,y,x)):
+                self.memoryST_physical_possible_3Dpoints.append((z,x,y))
     
     def get_basekey_for_check(self, idx_check_target_rowType , idx_targetKey_z, idx_targetKey_y, idx_targetKey_x) -> int:
         return idx_check_target_rowType*10000 + idx_targetKey_z*1000 + idx_targetKey_y*100 + idx_targetKey_x*10
@@ -424,25 +422,10 @@ class MyAI(Alg3D):
                             self.memoryST_doubleReach_not_possible_3Dpoints.append((z,y,x))
             #各位置について、置いたら即勝利点が2つ以上になるかを確認する。
         
-        
-    ############### 一括初期化処理 ################
-    def do_initialize(self, board : List[List[List[int]]], player : int):
-        self.board = board
-        self.myPlayer = player
-        self.init_all_row_zyx_list()
-        self.init_memoryST_physical_possible_2Dpoints()
-        self.init_memoryST_winInstant_3Dpoints()  
-        self.init_memoryST_doubleReach_3Dpoints()  
-        # 知見を元に勝利状況とその座標を取得する。
-        self.memoryLT_winning_3Dpoints = []
-        self.memoryLT_losing_3Dpoints = []
-        self.logical_lv1_possible_3Dpoints = []
-        return
-
     ## 論理的着手可能点Lv1を計算する。
-    def caluculate_logical_lv1_possible_3Dpoints(self):
+    def init_logical_lv1_possible_3Dpoints(self):
         self.logical_lv1_possible_3Dpoints = []
-        for z,y,x in self.memoryST_physical_possible_2Dpoints:
+        for z,y,x in self.memoryST_physical_possible_3Dpoints:
             # 自分の勝利点ではない (これは事前に探索済みのため省略)
             # その上(z+1)が相手の勝利着手点ではない。
             if(z < 3):
@@ -451,5 +434,20 @@ class MyAI(Alg3D):
                 if( (z+1,y,x) in self.memoryLT_losing_3Dpoints):
                     continue
             self.logical_lv1_possible_3Dpoints.append((z,y,x))
-        print(f"caluculate_logical_lv1_possible_3Dpoints: {self.logical_lv1_possible_3Dpoints}")
+        print(f"init_logical_lv1_possible_3Dpoints: {self.logical_lv1_possible_3Dpoints}")
         return
+    ############### 一括初期化処理 ################
+    def do_initialize(self, board : List[List[List[int]]], player : int):
+        self.board = board
+        self.myPlayer = player
+        self.init_all_row_zyx_list()
+        self.init_memoryST_physical_possible_3Dpoints()
+        self.init_memoryST_winInstant_3Dpoints()  
+        self.init_memoryST_doubleReach_3Dpoints()  
+        # 知見を元に勝利状況とその座標を取得する。
+        self.memoryLT_winning_3Dpoints = []
+        self.memoryLT_losing_3Dpoints = []
+
+        self.init_logical_lv1_possible_3Dpoints()
+        return
+
