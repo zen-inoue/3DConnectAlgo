@@ -12,8 +12,8 @@ class MyAI(Alg3D):
         # 初期化
         self.do_initialize(board, player)
 
-        # 即置き判断
-        # 必勝点、必負点の確認と配置。
+        # 即置き判断(いわゆるpr0:最優先事項。)
+        # 必勝点があればおく。
         if(len(self.memoryST_winInstant_3Dpoints) > 0):
             z,y,x = self.memoryST_winInstant_3Dpoints[0]
             if(self.is_posible_to_place(z,y,x)):
@@ -28,14 +28,30 @@ class MyAI(Alg3D):
 
         # 置いたら負けるところにはおかない。但し、それが無ければ物理的におけるところに置くしかない。
         # 座標の若いところに置くと自動的に相手が置く可能性が高まることから座標の大きいところに優先的に置く。
-        if(len(self.logical_lv1_possible_3Dpoints) == 0):
-            print("論理的着手可能点Lv1がありません")
+        if(len(self.logical_pr1_possible_3Dpoints) == 0):
+            print("論理的着手可能点Pr1がありません")
             z,y,x = self.place_max(self.memoryST_physical_possible_3Dpoints)
             print(f"物理的着手可能点に配置します (z,y,x)=({z},{y},{x})")
             return (x,y)
         
+        # pr1 過去学習結果、勝利確定条件であればその手を打つ。(これは考慮が難しい為実装見送り)
+
+        # pr2 自分のダブルリーチ手があれば置く。
+        if(len(self.memoryST_doubleReach_possible_3Dpoints) != 0):
+            z,y,x = self.place_max(self.memoryST_doubleReach_possible_3Dpoints)
+            return (x,y)
+        # pr2 相手のダブルリーチを防ぐ
+        if(len(self.memoryST_opponent_doubleReach_not_possible_3Dpoints) != 0):
+            z,y,x = self.place_max(self.memoryST_opponent_doubleReach_not_possible_3Dpoints)
+            return (x,y)
+
+        # pr3 自分がリーチになるところには極力置かない(ダブルリーチ状況が減ることが予想されるため)
+        #     但し、ダブルリーチになる場合や完全勝利革新時は最優先で置く。
+        # pr4 相手の着手禁止手が増えるところにおく
+        # pr4 座標的重みづけで優位なところに置く
+
         ## 現状の最善手。
-        z,y,x = self.place_max(self.logical_lv1_possible_3Dpoints)
+        z,y,x = self.place_max(self.logical_pr1_possible_3Dpoints)
         if(self.is_posible_to_place(z,y,x) == False):
             print(f"{z},{y},{x}はおけない。")     
         return (x,y)
@@ -44,6 +60,9 @@ class MyAI(Alg3D):
     def do_initialize(self, board : List[List[List[int]]], player : int):
         self.board = board
         self.myPlayer = player
+        print(player)
+        self.opponentPlayer = 1 if player == 2 else 2    
+        print(self.opponentPlayer)
         self.init_all_row_zyx_list()
         self.init_memoryST_physical_possible_3Dpoints()
         self.init_memoryST_winInstant_3Dpoints()  
@@ -52,7 +71,7 @@ class MyAI(Alg3D):
         self.memoryLT_winning_3Dpoints = []
         self.memoryLT_losing_3Dpoints = []
 
-        self.init_logical_lv1_possible_3Dpoints()
+        self.init_logical_pr1_possible_3Dpoints()
         return
 
 
@@ -60,6 +79,7 @@ class MyAI(Alg3D):
     board : List[List[List[int]]]
     # 自分の手番
     myPlayer : int
+    opponentPlayer : int
 
     #物理的着手可能点(z,x,y)
     memoryST_physical_possible_3Dpoints : List[Tuple[int,int,int]] = []
@@ -72,15 +92,19 @@ class MyAI(Alg3D):
     memoryST_doubleReach_possible_3Dpoints : List[Tuple[int,int,int]] = []
     #ダブルリーチ点(即おけないもの)
     memoryST_doubleReach_not_possible_3Dpoints : List[Tuple[int,int,int]] = []
+    #相手ダブルリーチ点(即おけるもの)
+    memoryST_opponent_doubleReach_possible_3Dpoints : List[Tuple[int,int,int]] = []
+    #相手ダブルリーチ点(即おけないもの)
+    memoryST_opponent_doubleReach_not_possible_3Dpoints : List[Tuple[int,int,int]] = []
 
     #必勝法長期メモリーを考慮した勝利点(場面全体考慮)
     memoryLT_winning_3Dpoints : List[Tuple[int,int,int]] = [] # @TODO 未実装
     #必勝法長期メモリーを考慮した敗北点(場面全体考慮)
     memoryLT_losing_3Dpoints : List[Tuple[int,int,int]] = [] # @TODO 未実装
 
-    #論理的着手可能点Lv1
+    #論理的着手可能点pr1
     #その上(z+1)が相手の勝利着手点ではない。
-    logical_lv1_possible_3Dpoints : List[Tuple[int,int,int]] = []
+    logical_pr1_possible_3Dpoints : List[Tuple[int,int,int]] = []
 
     # LT: Long Term (場面全体を考慮)
 
@@ -415,7 +439,8 @@ class MyAI(Alg3D):
             return False
         return True
     
-    # 置いたらダブルリーチになる点を取得する関数。@TODO 空中浮遊を考慮するか
+    
+    # 置いたらダブルリーチになる点を取得する関数。
     def init_memoryST_doubleReach_3Dpoints(self):
         self.memoryST_doubleReach_possible_3Dpoints = []
         self.memoryST_doubleReach_not_possible_3Dpoints = []
@@ -423,28 +448,43 @@ class MyAI(Alg3D):
             if(self.board[z][y][x] == 0):
                 effective_row_zyx_list = self.get_effective_row_zyx_list(z, y, x)
                 reach_cnt = 0
+                opponent_reach_cnt = 0
                 for effective_row_zyx in effective_row_zyx_list:
                     cnt = 0
+                    opponent_cnt = 0
                     reach_flg = False
                     for(z1, y1, x1) in effective_row_zyx:
                         if self.board[z1][y1][x1] == self.myPlayer:
                             cnt += 1
+                        elif self.board[z1][y1][x1] == self.opponentPlayer:
+                            opponent_cnt += 1
                         elif self.board[z1][y1][x1] == 0 and z!=z1 and y!=y1 and x!=x1:
                             if self.is_posible_to_place(z1, y1, x1) == True:
                                 reach_flg = True
                     ## 影響行で2つ自石がある場合リーチ対象
                     if(cnt == 2 and reach_flg == True):
                         reach_cnt += 1
+                    ## 影響行で2つ相手石がある場合リーチ対象
+                    if(opponent_cnt == 2 and reach_flg == True):
+                        ooponent_reach_cnt += 1
+
                     if(reach_cnt >= 2):
                         if(self.is_posible_to_place(z, y, x) == True):
                             self.memoryST_doubleReach_possible_3Dpoints.append((z,y,x))
                         else:
                             self.memoryST_doubleReach_not_possible_3Dpoints.append((z,y,x))
+
+                    if(opponent_reach_cnt >= 2):
+                        if(self.is_posible_to_place(z, y, x) == True):
+                            self.memoryST_opponent_doubleReach_possible_3Dpoints.append((z,y,x))
+                        else:
+                            self.memoryST_opponent_doubleReach_not_possible_3Dpoints.append((z,y,x))
+
             #各位置について、置いたら即勝利点が2つ以上になるかを確認する。
         
-    ## 論理的着手可能点Lv1を計算する。
-    def init_logical_lv1_possible_3Dpoints(self):
-        self.logical_lv1_possible_3Dpoints = []
+    ## 論理的着手可能点pr1を計算する。
+    def init_logical_pr1_possible_3Dpoints(self):
+        self.logical_pr1_possible_3Dpoints = []
         for z,y,x in self.memoryST_physical_possible_3Dpoints:
             # 自分の勝利点ではない (これは事前に探索済みのため省略)
             # その上(z+1)が相手の勝利着手点ではない。
@@ -453,8 +493,8 @@ class MyAI(Alg3D):
                     continue
                 if( (z+1,y,x) in self.memoryLT_losing_3Dpoints):
                     continue
-            self.logical_lv1_possible_3Dpoints.append((z,y,x))
-        print(f"init_logical_lv1_possible_3Dpoints: {self.logical_lv1_possible_3Dpoints}")
+            self.logical_pr1_possible_3Dpoints.append((z,y,x))
+        print(f"init_logical_pr1_possible_3Dpoints: {self.logical_pr1_possible_3Dpoints}")
         return
     
     # 最大座標配置
