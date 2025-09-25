@@ -25,6 +25,10 @@ class MyAI(Alg3D):
             if(self.is_posible_to_place(z,y,x)):
                 print(f"必敗点を回避するために配置します (z,y,x)=({z},{y},{x})")
                 return (x,y)
+
+        # self.logical_lv1_possible_3Dpoints を計算しにいく。
+        self.logical_lv1_possible_3Dpoints = []
+        self.caluculate_logical_lv1_possible_3Dpoints();
         return (0,1)
 
     # 盤面の情報
@@ -50,9 +54,7 @@ class MyAI(Alg3D):
     memoryLT_losing_3Dpoints : List[Tuple[int,int,int]] = [] # @TODO 未実装
 
     #論理的着手可能点Lv1
-    #定義：自身の勝利着手点ではない
-    #かつ、その上(z+1)が相手の勝利着手点ではない。
-    #かつ、その上(z+1)が相手の必勝法メモリー(LT,ST)勝利点ではない。
+    #その上(z+1)が相手の勝利着手点ではない。
     logical_lv1_possible_3Dpoints : List[Tuple[int,int,int]] = []
 
     # LT: Long Term (場面全体を考慮)
@@ -430,4 +432,17 @@ class MyAI(Alg3D):
         self.logical_lv1_possible_3Dpoints = []
         return
 
-    
+    ## 論理的着手可能点Lv1を計算する。
+    def caluculate_logical_lv1_possible_3Dpoints(self):
+        self.logical_lv1_possible_3Dpoints = []
+        for z,y,x in self.memoryST_physical_possible_2Dpoints:
+            # 自分の勝利点ではない (これは事前に探索済みのため省略)
+            # その上(z+1)が相手の勝利着手点ではない。
+            if(z < 3):
+                if( (z+1,y,x) in self.memoryST_loseInstant_3Dpoints):
+                    continue
+                if( (z+1,y,x) in self.memoryLT_losing_3Dpoints):
+                    continue
+            self.logical_lv1_possible_3Dpoints.append((z,y,x))
+        print(f"caluculate_logical_lv1_possible_3Dpoints: {self.logical_lv1_possible_3Dpoints}")
+        return
