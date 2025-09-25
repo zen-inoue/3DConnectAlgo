@@ -26,15 +26,33 @@ class MyAI(Alg3D):
                 print(f"必敗点を回避するために配置します (z,y,x)=({z},{y},{x})")
                 return (x,y)
 
+        # 置いたら負けるところにはおかない。但し、それが無ければ物理的におけるところに置くしかない。
+        # 座標の若いところに置くと自動的に相手が置く可能性が高まることから座標の大きいところに優先的に置く。
         if(len(self.logical_lv1_possible_3Dpoints) == 0):
             print("論理的着手可能点Lv1がありません")
-            z,y,x = self.memoryST_physical_possible_3Dpoints[0]
+            z,y,x = self.place_max(self.memoryST_physical_possible_3Dpoints[tmp_len-1])
             print(f"物理的着手可能点に配置します (z,y,x)=({z},{y},{x})")
             return (x,y)
         
         ## 現状の最善手。
-        z,y,x = self.logical_lv1_possible_3Dpoints[0]            
+        z,y,x = self.place_max(self.logical_lv1_possible_3Dpoints)            
         return (x,y)
+
+    ############### 一括初期化処理 ################
+    def do_initialize(self, board : List[List[List[int]]], player : int):
+        self.board = board
+        self.myPlayer = player
+        self.init_all_row_zyx_list()
+        self.init_memoryST_physical_possible_3Dpoints()
+        self.init_memoryST_winInstant_3Dpoints()  
+        self.init_memoryST_doubleReach_3Dpoints()  
+        # 知見を元に勝利状況とその座標を取得する。
+        self.memoryLT_winning_3Dpoints = []
+        self.memoryLT_losing_3Dpoints = []
+
+        self.init_logical_lv1_possible_3Dpoints()
+        return
+
 
     # 盤面の情報
     board : List[List[List[int]]]
@@ -436,18 +454,10 @@ class MyAI(Alg3D):
             self.logical_lv1_possible_3Dpoints.append((z,y,x))
         print(f"init_logical_lv1_possible_3Dpoints: {self.logical_lv1_possible_3Dpoints}")
         return
-    ############### 一括初期化処理 ################
-    def do_initialize(self, board : List[List[List[int]]], player : int):
-        self.board = board
-        self.myPlayer = player
-        self.init_all_row_zyx_list()
-        self.init_memoryST_physical_possible_3Dpoints()
-        self.init_memoryST_winInstant_3Dpoints()  
-        self.init_memoryST_doubleReach_3Dpoints()  
-        # 知見を元に勝利状況とその座標を取得する。
-        self.memoryLT_winning_3Dpoints = []
-        self.memoryLT_losing_3Dpoints = []
-
-        self.init_logical_lv1_possible_3Dpoints()
-        return
-
+    
+    # 最大座標配置
+    def place_max(self, list:Tuple[int,int,int]) -> Tuple[int,int]:
+        tmp_len = len(self.memoryST_physical_possible_3Dpoints)
+        if(tmp_len != 0):
+            z,y,x = self.list[tmp_len -1]
+        return (z,y,x)
