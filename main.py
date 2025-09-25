@@ -27,9 +27,16 @@ class MyAI(Alg3D):
                 return (x,y)
 
         # self.logical_lv1_possible_3Dpoints を計算しにいく。
-        self.logical_lv1_possible_3Dpoints = []
         self.caluculate_logical_lv1_possible_3Dpoints();
-        return (0,1)
+        if(len(self.logical_lv1_possible_3Dpoints) == 0):
+            print("論理的着手可能点Lv1がありません")
+            z,y,x = self.memoryST_physical_possible_2Dpoints[0]
+            print(f"物理的着手可能点に配置します (z,y,x)=({z},{y},{x})")
+            return (x,y)
+        
+        ## 現状の最善手。
+        z,y,x = self.logical_lv1_possible_3Dpoints[0]            
+        return (x,y)
 
     # 盤面の情報
     board : List[List[List[int]]]
