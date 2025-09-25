@@ -14,7 +14,7 @@ class MyAI(Alg3D):
         self.opponentPlayer = 1 if player == 2 else 2    
 
         # テスト用に石を配置するコード(デバッグ用) @TODO コメントアウト
-        ##self.do_test_put()
+        self.do_test_put()
 
         # 初期化
         self.do_initialize(board, player)
@@ -43,6 +43,10 @@ class MyAI(Alg3D):
         
         # pr1 過去学習結果、勝利確定条件であればその手を打つ。(これは考慮が難しい為実装見送り)
 
+        print(f"自分のダブルリーチ手：{self.memoryST_doubleReach_possible_3Dpoints}")
+        print(f"相手のダブルリーチ手：{self.memoryST_opponent_doubleReach_possible_3Dpoints}")
+        print(f"自分のダブルリーチ手[notP]：{self.memoryST_doubleReach_not_possible_3Dpoints}")
+        print(f"相手のダブルリーチ手[notP]：{self.memoryST_opponent_doubleReach_not_possible_3Dpoints}")
         # pr2 自分のダブルリーチ手があれば置く。
         if(len(self.memoryST_doubleReach_possible_3Dpoints) != 0):
             z,y,x = self.place_max(self.memoryST_doubleReach_possible_3Dpoints)
@@ -446,6 +450,8 @@ class MyAI(Alg3D):
     def init_memoryST_doubleReach_3Dpoints(self):
         self.memoryST_doubleReach_possible_3Dpoints = []
         self.memoryST_doubleReach_not_possible_3Dpoints = []
+        self.memoryST_opponent_doubleReach_possible_3Dpoints = []
+        self.memoryST_opponent_doubleReach_not_possible_3Dpoints = []
         for z, y, x in [(z,y,x) for z in range(4) for y in range(4) for x in range(4)]:
             if(self.board[z][y][x] == 0):
                 effective_row_zyx_list = self.get_effective_row_zyx_list(z, y, x)
@@ -460,7 +466,9 @@ class MyAI(Alg3D):
                             cnt += 1
                         elif self.board[z1][y1][x1] == self.opponentPlayer:
                             opponent_cnt += 1
-                        elif self.board[z1][y1][x1] == 0 and z!=z1 and y!=y1 and x!=x1:
+                            
+                        # チェック対象以外に空があるということは他の2か所が同じ石の場合、リーチ可能性あり。そのフラグをonにする。
+                        elif self.board[z1][y1][x1] == 0 and (z*100 + y*10 + x != z1*100 + y1*10 + x1):
                             if self.is_posible_to_place(z1, y1, x1) == True:
                                 reach_flg = True
                     ## 影響行で2つ自石がある場合リーチ対象
@@ -470,17 +478,16 @@ class MyAI(Alg3D):
                     if(opponent_cnt == 2 and reach_flg == True):
                         opponent_reach_cnt += 1
 
-                    if(reach_cnt >= 2):
-                        if(self.is_posible_to_place(z, y, x) == True):
-                            self.memoryST_doubleReach_possible_3Dpoints.append((z,y,x))
-                        else:
-                            self.memoryST_doubleReach_not_possible_3Dpoints.append((z,y,x))
-
-                    if(opponent_reach_cnt >= 2):
-                        if(self.is_posible_to_place(z, y, x) == True):
-                            self.memoryST_opponent_doubleReach_possible_3Dpoints.append((z,y,x))
-                        else:
-                            self.memoryST_opponent_doubleReach_not_possible_3Dpoints.append((z,y,x))
+                if(reach_cnt >= 2):
+                    if(self.is_posible_to_place(z, y, x) == True):
+                        self.memoryST_doubleReach_possible_3Dpoints.append((z,y,x))
+                    else:
+                        self.memoryST_doubleReach_not_possible_3Dpoints.append((z,y,x))
+                if(opponent_reach_cnt >= 2):
+                    if(self.is_posible_to_place(z, y, x) == True):
+                        self.memoryST_opponent_doubleReach_possible_3Dpoints.append((z,y,x))
+                    else:
+                        self.memoryST_opponent_doubleReach_not_possible_3Dpoints.append((z,y,x))
 
             #各位置について、置いたら即勝利点が2つ以上になるかを確認する。
         
@@ -525,8 +532,30 @@ class MyAI(Alg3D):
         self.opponentPlayer = tmp_myPlayer
         self.myPlayer = tmp_opponentPlayer
 
+
     # x,yを渡してboardに石を配置するテスト用プログラム。
     def do_test_put(self):
+        self.test_put(1,0)
+        self.test_put(1,0)
+        self.test_put(2,0)
+        self.test_put(2,0)
+        self.test_put(0,1)
+        self.test_put(0,1)
+        self.test_put(0,2)
+        self.test_put(0,2)
+        self.test_put(3,3)
+        self.test_put(0,3)
+        self.test_put(3,3)
+        self.test_put(3,3)
+        self.test_put(2,2)
+        self.test_put(2,0)
+        self.test_put(2,2)
+        self.test_put(3,0)
+        self.test_put(3,1)
+        self.test_put(0,0)
+        self.test_put(3,1)
+
+    def do_test_put_doublereach_test(self):
         self.test_put(3, 3)
         self.test_put(3, 3)
         self.test_put(3, 3)
@@ -555,6 +584,18 @@ class MyAI(Alg3D):
         self.test_put(0, 2)
         self.test_put(1, 2)
         self.test_put(1, 2)
+        self.test_put(1, 2)
+        self.test_put(0, 2)
+        self.test_put(0, 2)
+        self.test_put(0, 2)
+        self.test_put(3, 1)
+        self.test_put(3, 0)
+        self.test_put(3, 1)
+        self.test_put(3, 1)
+        self.test_put(3, 1)
+        self.test_put(3, 0)
+        self.test_put(3, 0)
+        ####
         print("手順:" + str(self.myPlayer))
 
 
