@@ -9,6 +9,11 @@ class MyAI(Alg3D):
         player: int, # 先手(黒):1 後手(白):2
         last_move: Tuple[int, int, int] # 直前に置かれた場所(x, y, z)
     ) -> Tuple[int, int]:
+        self.board = board
+        self.myPlayer = player
+        self.opponentPlayer = 1 if player == 2 else 2    
+
+        self.do_test_put()
         # 初期化
         self.do_initialize(board, player)
 
@@ -58,11 +63,6 @@ class MyAI(Alg3D):
 
     ############### 一括初期化処理 ################
     def do_initialize(self, board : List[List[List[int]]], player : int):
-        self.board = board
-        self.myPlayer = player
-        print(player)
-        self.opponentPlayer = 1 if player == 2 else 2    
-        print(self.opponentPlayer)
         self.init_all_row_zyx_list()
         self.init_memoryST_physical_possible_3Dpoints()
         self.init_memoryST_winInstant_3Dpoints()  
@@ -466,7 +466,7 @@ class MyAI(Alg3D):
                         reach_cnt += 1
                     ## 影響行で2つ相手石がある場合リーチ対象
                     if(opponent_cnt == 2 and reach_flg == True):
-                        ooponent_reach_cnt += 1
+                        opponent_reach_cnt += 1
 
                     if(reach_cnt >= 2):
                         if(self.is_posible_to_place(z, y, x) == True):
@@ -503,3 +503,55 @@ class MyAI(Alg3D):
         if(tmp_len != 0):
             z,y,x = list[tmp_len -1]
         return (z,y,x)
+
+    def test_put(self, x:int,y:int):
+        #x,y指定したときの最大の配置可能なzを取得する。
+        min_z = 99
+        for tmp_z in range(4):
+            if(self.board[tmp_z][y][x] == 0):
+                if min_z > tmp_z:
+                    min_z = tmp_z
+        if min_z == 99 :
+            print(f"配置不能({x},{y})")
+        else:
+            print(f"配置OK({x},{y})")
+            self.board[min_z][y][x] = self.myPlayer
+
+        # 手順入れ替え
+        tmp_myPlayer = self.myPlayer
+        tmp_opponentPlayer = self.opponentPlayer
+        self.opponentPlayer = tmp_myPlayer
+        self.myPlayer = tmp_opponentPlayer
+
+    # x,yを渡してboardに石を配置するテスト用プログラム。
+    def do_test_put(self):
+        self.test_put(3, 3)
+        self.test_put(3, 3)
+        self.test_put(3, 3)
+        self.test_put(3, 3)
+        self.test_put(2, 3)
+        self.test_put(2, 3)
+        self.test_put(2, 3)
+        self.test_put(2, 3)
+        self.test_put(1, 3)
+        self.test_put(0, 3)
+        self.test_put(1, 3)
+        self.test_put(1, 3)
+        self.test_put(1, 3)
+        self.test_put(0, 3)
+        self.test_put(0, 3)
+        self.test_put(0, 3)
+        self.test_put(3, 2)
+        self.test_put(3, 2)
+        self.test_put(3, 2)
+        self.test_put(3, 2)
+        self.test_put(2, 2)
+        self.test_put(2, 2)
+        self.test_put(2, 2)
+        self.test_put(2, 2)
+        self.test_put(1, 2)
+        self.test_put(0, 2)
+        self.test_put(1, 2)
+        self.test_put(1, 2)
+
+
