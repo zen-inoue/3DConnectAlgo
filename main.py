@@ -13,7 +13,9 @@ class MyAI(Alg3D):
         self.myPlayer = player
         self.opponentPlayer = 1 if player == 2 else 2    
 
-        self.do_test_put()
+        # テスト用に石を配置するコード(デバッグ用) @TODO コメントアウト
+        ##self.do_test_put()
+
         # 初期化
         self.do_initialize(board, player)
 
