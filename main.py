@@ -48,8 +48,8 @@ class MyAI(Alg3D):
             z,y,x = self.place_max(self.memoryST_doubleReach_possible_3Dpoints)
             return (x,y)
         # pr2 相手のダブルリーチを防ぐ
-        if(len(self.memoryST_opponent_doubleReach_not_possible_3Dpoints) != 0):
-            z,y,x = self.place_max(self.memoryST_opponent_doubleReach_not_possible_3Dpoints)
+        if(len(self.memoryST_opponent_doubleReach_possible_3Dpoints) != 0):
+            z,y,x = self.place_max(self.memoryST_opponent_doubleReach_possible_3Dpoints)
             return (x,y)
 
         # pr3 自分がリーチになるところには極力置かない(ダブルリーチ状況が減ることが予想されるため)
