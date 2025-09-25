@@ -459,5 +459,5 @@ class MyAI(Alg3D):
     def place_max(self, list:Tuple[int,int,int]) -> Tuple[int,int]:
         tmp_len = len(self.memoryST_physical_possible_3Dpoints)
         if(tmp_len != 0):
-            z,y,x = self.list[tmp_len -1]
+            z,y,x = list[tmp_len -1]
         return (z,y,x)
