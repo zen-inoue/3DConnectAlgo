@@ -14,7 +14,7 @@ class MyAI(Alg3D):
         self.opponentPlayer = 1 if player == 2 else 2    
 
         # テスト用に石を配置するコード(デバッグ用) @TODO コメントアウト
-        #self.do_test_put()
+        self.do_test_put()
 
         # 初期化
         self.do_initialize(board, player)
@@ -245,10 +245,16 @@ class MyAI(Alg3D):
             for y in range(4):
                 for x in range(4):
                     if self.is_posible_to_place(z,y,x) and (z,y,x) in self.logical_pr1_possible_3Dpoints:
+                        print("vvv")
+                        print(f"{z},{y},{x}")
+                        print("^^^")
                         tmp_imp =self.cell_important_value_board[z][y][x]
-                        if max_imp < tmp_imp:
+                        print(f"tmp_imp={tmp_imp}")
+                        if max_imp <= tmp_imp:
+                            print("来たよ！")
                             max_imp = tmp_imp
                             max_z,max_y,max_x = z,y,x
+        print(f"max={max_z},{max_y},{max_x}")
         return max_z,max_y,max_x
         
 
@@ -835,10 +841,10 @@ class MyAI(Alg3D):
         self.test_put(3, 0)
         self.test_put(0, 1)
         self.test_put(3, 1)
+        self.test_put(0, 3)
+        self.test_put(3, 3)
+        self.test_put(3, 3)
         self.test_put(3, 3)
         self.test_put(0, 3)
-        self.test_put(0, 0)
-        self.test_put(0, 0)
-        self.test_put(0, 1)
-        self.test_put(0, 1)
+        self.test_put(0, 3)
         self.test_put(3, 1)
