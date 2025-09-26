@@ -222,7 +222,20 @@ class MyAI(Alg3D):
         self.cell_important_value_board[2][1][2] += MyAI.IMP_ADDRESS + add_imp
         self.cell_important_value_board[2][2][1] += MyAI.IMP_ADDRESS + add_imp
         self.cell_important_value_board[2][2][2] += MyAI.IMP_ADDRESS + add_imp
-    
+
+        ## 2段目優先順位を少しあげる。
+        for z in range(4):
+            for y in range(4):
+                for x in range(4):
+                    if z == 1:
+                        self.cell_important_value_board[z][y][x] += MyAI.IMP_ADDRESS_WEEK
+                    if( z == 3 and (x,y != 0,0 and x,y != 0,3 and x,y != 3,0 and x,y != 3,3 )):
+                        self.cell_important_value_board[z][y][x] +=  -MyAI.IMP_ADDRESS_WEEK ## 関係ない4の段は弱い
+                       
+                        
+        self.cell_important_value_board[3][1][1] += MyAI.IMP_ADDRESS + add_imp
+                    
+
     def get_most_important(self) -> Tuple[int,int,int]:
         max_imp = 0
         max_z = 0
@@ -312,8 +325,9 @@ class MyAI(Alg3D):
     cell_important_value_board : List[List[List[int]]]
     IMP_Z0_2STONES_MYPLAYER = 10
     IMP_Z0_2STONES_OPPONENT = 20
-    IMP_ADDRESS = 5
-    IMP_ENPOWER_FIRST = 20
+    IMP_ADDRESS = 10
+    IMP_ADDRESS_WEEK = 10
+    IMP_ENPOWER_FIRST = 15
 
     #物理的着手可能点(z,x,y)
     memoryST_physical_possible_3Dpoints : List[Tuple[int,int,int]] = []
