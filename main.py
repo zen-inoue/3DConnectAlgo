@@ -2,7 +2,7 @@ import random
 import importlib.util
 from typing import List, Tuple
 from local_driver import Alg3D, Board # ローカル検証用
-from data_memory import memoryLT_winDataForZ0
+#from data_memory import memoryLT_winDataForZ0
 #from framework import Alg3D, Board # 本番用
 
 class MyAI(Alg3D):
@@ -207,7 +207,7 @@ class MyAI(Alg3D):
         self.cell_important_value_board[2][2][1] += MyAI.IMP_ADDRESS
         self.cell_important_value_board[2][2][2] += MyAI.IMP_ADDRESS
     
-    def get_most_important(self) -> Tuple[int,int,int]
+    def get_most_important(self) -> Tuple[int,int,int]:
         max_imp = 0
         max_z = 0
         max_y = 0
@@ -215,7 +215,7 @@ class MyAI(Alg3D):
         for z in range(4):
             for y in range(4):
                 for x in range(4):
-                    if(self.is_posible_to_place(z,y,x)):
+                    if self.is_posible_to_place(z,y,x):
                         tmp_imp =self.cell_important_value_board[z][y][x]
                         if max_imp < tmp_imp:
                             max_imp = tmp_imp
