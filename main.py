@@ -205,10 +205,10 @@ class MyAI(Alg3D):
         add_imp = 0
         if self.count_stone < 6:
             add_imp = MyAI.IMP_ENPOWER_FIRST
-        self.cell_important_value_board[0][0][0] += MyAI.IMP_ADDRESS + add_imp
-        self.cell_important_value_board[0][0][3] += MyAI.IMP_ADDRESS + add_imp
-        self.cell_important_value_board[0][3][0] += MyAI.IMP_ADDRESS + add_imp
-        self.cell_important_value_board[0][3][3] += MyAI.IMP_ADDRESS + add_imp
+        self.cell_important_value_board[0][0][0] += MyAI.IMP_ADDRESS + add_imp + 3
+        self.cell_important_value_board[0][0][3] += MyAI.IMP_ADDRESS + add_imp + 3
+        self.cell_important_value_board[0][3][0] += MyAI.IMP_ADDRESS + add_imp + 3
+        self.cell_important_value_board[0][3][3] += MyAI.IMP_ADDRESS + add_imp + 3
         self.cell_important_value_board[3][0][0] += MyAI.IMP_ADDRESS + add_imp
         self.cell_important_value_board[3][0][3] += MyAI.IMP_ADDRESS + add_imp
         self.cell_important_value_board[3][3][0] += MyAI.IMP_ADDRESS + add_imp
