@@ -22,11 +22,9 @@ class MyAI(Alg3D):
         # 即置き判断(いわゆるpr0:最優先事項。)
         # 必勝点があればおく。
         if(len(self.memoryST_winInstant_3Dpoints) > 0):
-            ## instantバグあり 暫定回避 @TODO
-            for z,y,x in self.memoryST_winInstant_3Dpoints :
-                if(self.is_posible_to_place(z,y,x)):
-                    print(f"必勝点に配置します (z,y,x)=({z},{y},{x})")
-                    return (x,y)
+            if(self.is_posible_to_place(z,y,x)):
+                print(f"必勝点に配置します (z,y,x)=({z},{y},{x})")
+                return (x,y)
 
         print("↓うまく機能してない↓")
         print(self.memoryST_loseInstant_3Dpoints)
