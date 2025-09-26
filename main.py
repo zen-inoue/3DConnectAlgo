@@ -1,6 +1,6 @@
 from typing import List, Tuple
-#from local_driver import Alg3D, Board # ローカル検証用
-from framework import Alg3D, Board # 本番用
+from local_driver import Alg3D, Board # ローカル検証用
+#from framework import Alg3D, Board # 本番用
 
 class MyAI(Alg3D):
     def get_move(
@@ -229,7 +229,7 @@ class MyAI(Alg3D):
                 for x in range(4):
                     if z == 1:
                         self.cell_important_value_board[z][y][x] += MyAI.IMP_ADDRESS_WEEK
-                    if( z == 3 and (x,y != 0,0 and x,y != 0,3 and x,y != 3,0 and x,y != 3,3 )):
+                    if( z == 3 and ((x,y) != (0,0) and (x,y) != (0,3) and x,y != (3,0) and x,y != (3,3) )):
                         self.cell_important_value_board[z][y][x] +=  -MyAI.IMP_ADDRESS_WEEK ## 関係ない4の段は弱い
                        
                         
