@@ -1,5 +1,8 @@
+import random
+import importlib.util
 from typing import List, Tuple
 from local_driver import Alg3D, Board # ローカル検証用
+from data_memory import memoryLT_winDataForZ0
 #from framework import Alg3D, Board # 本番用
 
 class MyAI(Alg3D):
@@ -42,11 +45,13 @@ class MyAI(Alg3D):
             return (x,y)
         
         # pr1 過去学習結果、勝利確定条件であればその手を打つ。(これは考慮が難しい為実装見送り)
-
-        print(f"自分のダブルリーチ手：{self.memoryST_doubleReach_possible_3Dpoints}")
-        print(f"相手のダブルリーチ手：{self.memoryST_opponent_doubleReach_possible_3Dpoints}")
-        print(f"自分のダブルリーチ手[notP]：{self.memoryST_doubleReach_not_possible_3Dpoints}")
-        print(f"相手のダブルリーチ手[notP]：{self.memoryST_opponent_doubleReach_not_possible_3Dpoints}")
+        # pr1-1: z=0の解析結果を使用する。(比較的登場頻度が多いため)
+        #        全通りは最大3^16通りありそこからの再起計算かんがえると現実的ではない。
+        #        その為、[ リーチ→強制手→ダブルリーチ ]のみ解析する。
+        #        →これも組合せ爆発が生じた為、この状況が起きやすい状況を2軸主体で計算する。
+        #        →これも計算が複雑。保留 @TODO なんらか対応
+        ## self.study_code_pr1_z0()
+        
         # pr2 自分のダブルリーチ手があれば置く。
         if(len(self.memoryST_doubleReach_possible_3Dpoints) != 0):
             z,y,x = self.place_max(self.memoryST_doubleReach_possible_3Dpoints)
@@ -56,16 +61,208 @@ class MyAI(Alg3D):
             z,y,x = self.place_max(self.memoryST_opponent_doubleReach_possible_3Dpoints)
             return (x,y)
 
-        # pr3 自分がリーチになるところには極力置かない(ダブルリーチ状況が減ることが予想されるため)
-        #     但し、ダブルリーチになる場合や完全勝利革新時は最優先で置く。
-        # pr4 相手の着手禁止手が増えるところにおく
-        # pr4 座標的重みづけで優位なところに置く
+        # pr3 完全勝利確定がmemoryLTで判明している場合はおく。
+        # z0の2個並んだ状況は危険。重要重みづけを行う。
+        self.caluculate_importance_z0()
 
-        ## 現状の最善手。
-        z,y,x = self.place_max(self.logical_pr1_possible_3Dpoints)
+
+        
+
+        # pr4 相手の着手禁止手が増えるところ。重みづけ。 @TODO 要実装
+        # pr5 座標的重みづけで優位なところに置く
+        self.caluculate_importance_by_address()
+        # pr6 自分がリーチになるところには極力置かない(ダブルリーチ状況が減ることが予想されるため)
+
+
+        print("aaa")
+        print(self.cell_important_value_board)
+        print("bbb")
+        # 重みづけ最大のところに置く。
+        z,y,x = self.get_most_important()
         if(self.is_posible_to_place(z,y,x) == False):
-            print(f"{z},{y},{x}はおけない。")     
+            print(f"{z},{y},{x}はおけない。")
+            ## なぜかおけない場合は、下記で配置。
+            z,y,x = self.place_max(self.logical_pr1_possible_3Dpoints)
         return (x,y)
+
+    
+    ############### 座標ごとの優先度計算 ################
+    
+    def caluculate_importance_z0(self):
+        self.cell_important_value_board = self.get_empty_board()
+        check_target_rowDict : dict[int,int] ={}
+        basekey_list : list[int] = []
+        for idx in range(4):
+            basekey_list.append(MyAI.IDX_check_target_rowListX * 10 + idx)
+        for idx in range(4):
+            basekey_list.append(MyAI.IDX_check_target_rowListY * 10 + idx)
+        basekey_list.append(MyAI.IDX_check_target_rowListZDiagnal * 10 + 0) ##(z,y,x)=(0,0,0)からはじまる斜め
+        basekey_list.append(MyAI.IDX_check_target_rowListZDiagnal * 10 + 3) ##(z,y,x)=(0,0,3)からはじまる斜め
+
+        for basekey in basekey_list:
+            tmp_cnt_myPlayer = 0
+            tmp_cnt_opponent = 0
+            tmp_cnt_empty = 0
+
+            if(basekey // 10 == MyAI.IDX_check_target_rowListX):
+                idx = basekey % 10
+                for x in range(4):
+                    stoneType = self.board[0][idx][x]
+                    if stoneType == 0:
+                        tmp_cnt_myPlayer = 0
+                        tmp_cnt_opponent = 0
+                        tmp_cnt_empty = 0
+                        for idx_tmp in range(4):
+                            stoneTypeTmp = self.board[0][idx][idx_tmp]
+                            if stoneTypeTmp == self.myPlayer:
+                                tmp_cnt_myPlayer = tmp_cnt_myPlayer + 1
+                            elif stoneTypeTmp == self.opponentPlayer:
+                                tmp_cnt_opponent = tmp_cnt_opponent + 1
+                            else: ## 空
+                                tmp_cnt_empty = tmp_cnt_empty + 1
+                        if tmp_cnt_empty == 2 and tmp_cnt_myPlayer == 2:
+                            self.cell_important_value_board[0][idx][x] += MyAI.IMP_Z0_2STONES_MYPLAYER
+                        if tmp_cnt_empty == 2 and tmp_cnt_opponent == 2:
+                            self.cell_important_value_board[0][idx][x] += MyAI.IMP_Z0_2STONES_OPPONENT
+
+            if(basekey // 10 == MyAI.IDX_check_target_rowListY):
+                idx = basekey % 10
+                for y in range(4):
+                    stoneType = self.board[0][y][idx]
+                    if stoneType == 0:
+                        tmp_cnt_myPlayer = 0
+                        tmp_cnt_opponent = 0
+                        tmp_cnt_empty = 0
+                        for idx_tmp in range(4):
+                            stoneTypeTmp = self.board[0][idx_tmp][idx]
+                            if stoneTypeTmp == self.myPlayer:
+                                tmp_cnt_myPlayer = tmp_cnt_myPlayer + 1
+                            elif stoneTypeTmp == self.opponentPlayer:
+                                tmp_cnt_opponent = tmp_cnt_opponent + 1
+                            else: ## 空
+                                tmp_cnt_empty = tmp_cnt_empty + 1
+                        if tmp_cnt_empty == 2 and tmp_cnt_myPlayer == 2:
+                            self.cell_important_value_board[0][y][idx] += MyAI.IMP_Z0_2STONES_MYPLAYER
+                        if tmp_cnt_empty == 2 and tmp_cnt_opponent == 2:
+                            self.cell_important_value_board[0][y][idx] += MyAI.IMP_Z0_2STONES_OPPONENT
+
+
+            if(basekey // 10 == MyAI.IDX_check_target_rowListZDiagnal):
+                idx = basekey % 10
+                if(idx == 0):
+                    for idx2 in range(4):
+                        stoneType = self.board[0][idx2][idx2]
+                        if stoneType == 0:
+                            tmp_cnt_myPlayer = 0
+                            tmp_cnt_opponent = 0
+                            tmp_cnt_empty = 0
+                            for idx_tmp in range(4):
+                                stoneTypeTmp = self.board[0][idx_tmp][idx_tmp]
+                                if stoneTypeTmp == self.myPlayer:
+                                    tmp_cnt_myPlayer = tmp_cnt_myPlayer + 1
+                                elif stoneTypeTmp == self.opponentPlayer:
+                                    tmp_cnt_opponent = tmp_cnt_opponent + 1
+                                else: ## 空
+                                    tmp_cnt_empty = tmp_cnt_empty + 1
+                            if tmp_cnt_empty == 2 and tmp_cnt_myPlayer == 2:
+                                self.cell_important_value_board[0][idx2][idx2] += MyAI.IMP_Z0_2STONES_MYPLAYER
+                            if tmp_cnt_empty == 2 and tmp_cnt_opponent == 2:
+                                self.cell_important_value_board[0][idx2][idx2] += MyAI.IMP_Z0_2STONES_OPPONENT
+
+                else: ##idx == 3
+                    for idx2 in range(4):
+                        stoneType = self.board[0][idx2][3 - idx2]
+                        if stoneType == 0:
+                            tmp_cnt_myPlayer = 0
+                            tmp_cnt_opponent = 0
+                            tmp_cnt_empty = 0
+                            for idx_tmp in range(4):
+                                stoneTypeTmp = self.board[0][idx_tmp][3 - idx_tmp]
+                                if stoneTypeTmp == self.myPlayer:
+                                    tmp_cnt_myPlayer = tmp_cnt_myPlayer + 1
+                                elif stoneTypeTmp == self.opponentPlayer:
+                                    tmp_cnt_opponent = tmp_cnt_opponent + 1
+                                else: ## 空
+                                    tmp_cnt_empty = tmp_cnt_empty + 1
+                            if tmp_cnt_empty == 2 and tmp_cnt_myPlayer == 2:
+                                self.cell_important_value_board[0][idx2][3 - idx2] += MyAI.IMP_Z0_2STONES_MYPLAYER
+                            if tmp_cnt_empty == 2 and tmp_cnt_opponent == 2:
+                                self.cell_important_value_board[0][idx2][3 - idx2] += MyAI.IMP_Z0_2STONES_OPPONENT
+
+    def caluculate_importance_by_address(self):
+        self.cell_important_value_board[0][0][0] += MyAI.IMP_ADDRESS
+        self.cell_important_value_board[0][0][3] += MyAI.IMP_ADDRESS
+        self.cell_important_value_board[0][3][0] += MyAI.IMP_ADDRESS
+        self.cell_important_value_board[0][3][3] += MyAI.IMP_ADDRESS
+        self.cell_important_value_board[3][0][0] += MyAI.IMP_ADDRESS
+        self.cell_important_value_board[3][0][3] += MyAI.IMP_ADDRESS
+        self.cell_important_value_board[3][3][0] += MyAI.IMP_ADDRESS
+        self.cell_important_value_board[3][3][3] += MyAI.IMP_ADDRESS
+        self.cell_important_value_board[1][1][1] += MyAI.IMP_ADDRESS
+        self.cell_important_value_board[1][1][2] += MyAI.IMP_ADDRESS
+        self.cell_important_value_board[1][2][1] += MyAI.IMP_ADDRESS
+        self.cell_important_value_board[1][2][2] += MyAI.IMP_ADDRESS
+        self.cell_important_value_board[2][1][1] += MyAI.IMP_ADDRESS
+        self.cell_important_value_board[2][1][2] += MyAI.IMP_ADDRESS
+        self.cell_important_value_board[2][2][1] += MyAI.IMP_ADDRESS
+        self.cell_important_value_board[2][2][2] += MyAI.IMP_ADDRESS
+    
+    def get_most_important(self) -> Tuple[int,int,int]
+        max_imp = 0
+        max_z = 0
+        max_y = 0
+        max_x = 0
+        for z in range(4):
+            for y in range(4):
+                for x in range(4):
+                    if(self.is_posible_to_place(z,y,x)):
+                        tmp_imp =self.cell_important_value_board[z][y][x]
+                        if max_imp < tmp_imp:
+                            max_imp = tmp_imp
+                            max_z,max_y,max_x = z,y,x
+        return max_z,max_y,max_x
+        
+
+
+    ############### 重要2軸計算 ################
+    IDX_check_target_surfaceListXY : int = 10
+    IDX_check_target_surfaceListYZ : int = 11
+    IDX_check_target_surfaceListZX : int = 12
+    ## Y軸、X軸の斜めは揃えずらいので考慮不要でよいと判断。
+    IDX_check_target_surfaceListZDiagnal : int = 15
+    def caluculate_importance(self):
+        check_target_surfaceDict : dict[str,int]={}
+        basekey_surface_list : list[int] = []
+        base_key = 0
+        cnt_0 = 0
+        cnt_1 = 0
+        cnt_2 = 0
+        surface_cnt_dic: dict[int]= {}
+        surface_cnt_dic[0] = 0
+        surface_cnt_dic[1] = 0
+        surface_cnt_dic[2] = 0
+        for z in range(4):
+            for y in range(4):
+                for x in range(4):
+                    ## z = 0 のとき
+                    v = self.board[z][y][x]
+                    surface_cnt_dic[v] += 1
+
+        ## 面単位のチェックも
+        basekey_for_check = self.get_basekey_for_check_surface(self.IDX_check_target_surfaceListXY, 0, 0, 0)
+        basekey_surface_list.append(basekey_for_check)
+        ## 面単位のチェックも
+        basekey_for_check = self.get_basekey_for_check_surface(self.IDX_check_target_surfaceListXY, 1, 0, 0)
+        basekey_surface_list.append(basekey_for_check)
+        ## 面単位のチェックも
+        basekey_for_check = self.get_basekey_for_check_surface(self.IDX_check_target_surfaceListXY, 2, 0, 0)
+        basekey_surface_list.append(basekey_for_check)
+        ## 面単位のチェックも
+        basekey_for_check = self.get_basekey_for_check_surface(self.IDX_check_target_surfaceListXY, 3, 0, 0)
+        basekey_surface_list.append(basekey_for_check)
+                    
+    def get_basekey_for_check_surface(self,idx_for_check_surface,i):
+        return idx_for_check_surface * 100 + i * 10
 
     ############### 一括初期化処理 ################
     def do_initialize(self, board : List[List[List[int]]], player : int):
@@ -76,7 +273,6 @@ class MyAI(Alg3D):
         # 知見を元に勝利状況とその座標を取得する。
         self.memoryLT_winning_3Dpoints = []
         self.memoryLT_losing_3Dpoints = []
-
         self.init_logical_pr1_possible_3Dpoints()
         return
 
@@ -86,6 +282,14 @@ class MyAI(Alg3D):
     # 自分の手番
     myPlayer : int
     opponentPlayer : int
+
+    # 解析結果後の盤面情報
+    # 0:無影響空値 1:自分,2:相手,3:自分即勝利空値,4:相手即勝利空値,5:相手置くことで次自分が勝てる,6:自分が置くことで次相手が勝てる
+    ## analyzed_board : List[List[List[int]]] ## 未使用 @TODO
+    cell_important_value_board : List[List[List[int]]]
+    IMP_Z0_2STONES_MYPLAYER = 10
+    IMP_Z0_2STONES_OPPONENT = 20
+    IMP_ADDRESS = 5
 
     #物理的着手可能点(z,x,y)
     memoryST_physical_possible_3Dpoints : List[Tuple[int,int,int]] = []
@@ -138,9 +342,9 @@ class MyAI(Alg3D):
     def get_key_for_check(self, idx_check_target_rowType , idx_targetKey_z, idx_targetKey_y, idx_targetKey_x , stoneType) -> int:
         return self.get_basekey_for_check(idx_check_target_rowType , idx_targetKey_z, idx_targetKey_y, idx_targetKey_x) + stoneType
 
-    def get_key_for_check_multi(self, idx_check_target_rowType , idx_targetKey_z, idx_targetKey_y, idx_targetKey_x , stoneType) -> Tuple[int, int]:
+    def get_key_for_check_multi(self, idx_check_target_rowType , idx_targetKey_z, idx_targetKey_y, idx_targetKey_x) -> Tuple[int, int]:
         basekey = self.get_basekey_for_check(idx_check_target_rowType , idx_targetKey_z, idx_targetKey_y, idx_targetKey_x)
-        return  basekey + 1, basekey + 2
+        return  basekey + 0, basekey + 1, basekey + 2
     
     def check_and_add_for_check(self, check_target_rowDict : dict[str,int], key_for_check:str) ->  dict[str,int]:
         cnt = check_target_rowDict[key_for_check] ## これまでのカウント結果
@@ -249,7 +453,7 @@ class MyAI(Alg3D):
         for i in range(4):
             row_zyx.append((3 - i,3 - i,i))
         all_row_zyx_list.append(row_zyx)
-        ALL_ROW_XYZ_List = all_row_zyx_list
+        MyAI.ALL_ROW_XYZ_List = all_row_zyx_list
 
     
     # 発見した最初の空地の座標を返す。なければ(-1,-1,-1)。3つ配置してある前提で探すと即勝利点が取得できる。
@@ -321,6 +525,7 @@ class MyAI(Alg3D):
     IDX_check_target_rowListYDiagnal : int = 4
     IDX_check_target_rowListZDiagnal : int = 5
     IDX_check_target_rowListCrossDiagnal : int = 6
+
     def init_memoryST_winInstant_3Dpoints(self):
         self.memoryST_winInstant_3Dpoints = []
         check_target_rowDict : dict[str,int] ={}
@@ -339,7 +544,6 @@ class MyAI(Alg3D):
 
 #        print(check_target_rowDict)
         # 勝利ルートについて全通り探査する
-        # 横方向
         for x in range(4):
             for y in range(4):
                 for z in range(4):
@@ -407,6 +611,7 @@ class MyAI(Alg3D):
                         cnt = check_target_rowDict[key_for_check] ## これまでのカウント結果
                         check_target_rowDict[key_for_check] = cnt+1
                     
+        already_double_row_check_list = []
         # 3つ以上揃っているものを勝利点として記憶する
         for basekey in basekey_list:
             key_for_check = basekey + 0
@@ -416,23 +621,35 @@ class MyAI(Alg3D):
                 key_for_check = basekey + stoneType
                 cnt = check_target_rowDict[key_for_check]
                 if(cnt == 3 and empty_cnt == 1):
-                    print(f"WinInstant found! key:{key_for_check} cnt:{cnt} empty_cnt:{empty_cnt}")
+                    ##print(f"WinInstant found! key:{key_for_check} cnt:{cnt} empty_cnt:{empty_cnt}")
                     idx_check_target_rowType = (basekey // 10000) % 10
                     idx_targetKey_z = (basekey // 1000) % 10
                     idx_targetKey_y = (basekey // 100) % 10
                     idx_targetKey_x = (basekey // 10) % 10
-                    print(f"  -> rowType:{idx_check_target_rowType} z:{idx_targetKey_z} y:{idx_targetKey_y} x:{idx_targetKey_x} stoneType:{stoneType}")
+                    ##print(f"  -> rowType:{idx_check_target_rowType} z:{idx_targetKey_z} y:{idx_targetKey_y} x:{idx_targetKey_x} stoneType:{stoneType}")
                     z,y,x = self.check_emptyspot_in_row(idx_check_target_rowType, idx_targetKey_z, idx_targetKey_y, idx_targetKey_x);
                     if(z == -1):
-                        print("  -> あるはずの空きがない。ERR245")
+                        print("  -> あるはずの空きがない。ERR596")
                         print(idx_check_target_rowType, idx_targetKey_z, idx_targetKey_y, idx_targetKey_x)
                     #即勝利点を記憶
                     if(stoneType == self.myPlayer):
                         self.memoryST_winInstant_3Dpoints.append((z,y,x))
-                        print(f"  -> 勝点の空き座標は(z,y,x)=({z},{y},{x})")
+                        ##print(f"  -> 勝点の空き座標は(z,y,x)=({z},{y},{x})")
                     elif(stoneType != self.myPlayer and stoneType != 0):
                         self.memoryST_loseInstant_3Dpoints.append((z,y,x))
-                        print(f"  -> 負点の空き座標は(z,y,x)=({z},{y},{x})")
+                        ##print(f"  -> 負点の空き座標は(z,y,x)=({z},{y},{x})")
+                elif(cnt == 4):
+                    ## 本来ありえない。複数行既にそろっているチェック(学習用)
+                    if(basekey not in already_double_row_check_list):
+                        ## これは複数行勝っているというあり得ない状態のチェック。なので勝行・負行どちらでもかまわない。
+                        already_double_row_check_list.append(basekey)
+                    ##本来あり得ないが既に勝利している場合(学習用)
+                    if(stoneType == self.myPlayer):
+                        self.already_win_flg = True
+                    else:
+                        self.already_lose_flg = True
+        if(len(already_double_row_check_list) >=2 ):
+            self.already_double_row_flg = True
 
     def is_posible_to_place(self, z, y, x) -> bool:
         if(z < 0 or z > 3 or y < 0 or y > 3 or x < 0 or x > 3):
@@ -505,7 +722,21 @@ class MyAI(Alg3D):
             self.logical_pr1_possible_3Dpoints.append((z,y,x))
         print(f"init_logical_pr1_possible_3Dpoints: {self.logical_pr1_possible_3Dpoints}")
         return
+    ##
+    def get_empty_board(self) -> List[List[List[int]]]:
+        board = []
+        for z in range(4):
+            row_y = []
+            for y in range(4):
+                row_x = []
+                for x in range(4):
+                    row_x.append(0)
+                row_y.append(row_x)
+            board.append(row_y)
+        return board
+        
     
+    ################　以下はテスト用の関数 ######################
     # 最大座標配置
     def place_max(self, list:Tuple[int,int,int]) -> Tuple[int,int]:
         tmp_len = len(list)
@@ -555,48 +786,6 @@ class MyAI(Alg3D):
         self.test_put(0,0)
         self.test_put(3,1)
 
-    def do_test_put_doublereach_test(self):
-        self.test_put(3, 3)
-        self.test_put(3, 3)
-        self.test_put(3, 3)
-        self.test_put(3, 3)
-        self.test_put(2, 3)
-        self.test_put(2, 3)
-        self.test_put(2, 3)
-        self.test_put(2, 3)
-        self.test_put(1, 3)
-        self.test_put(0, 3)
-        self.test_put(1, 3)
-        self.test_put(1, 3)
-        self.test_put(1, 3)
-        self.test_put(0, 3)
-        self.test_put(0, 3)
-        self.test_put(0, 3)
-        self.test_put(3, 2)
-        self.test_put(3, 2)
-        self.test_put(3, 2)
-        self.test_put(3, 2)
-        self.test_put(2, 2)
-        self.test_put(2, 2)
-        self.test_put(2, 2)
-        self.test_put(2, 2)
-        self.test_put(1, 2)
-        self.test_put(0, 2)
-        self.test_put(1, 2)
-        self.test_put(1, 2)
-        self.test_put(1, 2)
-        self.test_put(0, 2)
-        self.test_put(0, 2)
-        self.test_put(0, 2)
-        self.test_put(3, 1)
-        self.test_put(3, 0)
-        self.test_put(3, 1)
-        self.test_put(3, 1)
-        self.test_put(3, 1)
-        self.test_put(3, 0)
-        self.test_put(3, 0)
-        ####
-        print("手順:" + str(self.myPlayer))
 
 
 
