@@ -1,6 +1,5 @@
 from typing import List, Tuple
 #from local_driver import Alg3D, Board # ローカル検証用
-#from data_memory import memoryLT_winDataForZ0
 from framework import Alg3D, Board # 本番用
 
 class MyAI(Alg3D):
@@ -272,6 +271,10 @@ class MyAI(Alg3D):
 
     ############### 一括初期化処理 ################
     def do_initialize(self, board : List[List[List[int]]], player : int):
+        self.cell_important_value_board = []
+        self.memoryST_winInstant_3Dpoints = []
+        self.memoryST_doubleReach_not_possible_3Dpoints = []
+        self.memoryST_loseInstant_3Dpoints = []
         self.init_all_row_zyx_list()
         self.init_memoryST_physical_possible_3Dpoints()
         self.init_memoryST_winInstant_3Dpoints()  
