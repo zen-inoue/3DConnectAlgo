@@ -34,7 +34,7 @@ class MyAI(Alg3D):
             if(z > 0):
                 print(self.board[z-1][y][x])
 
-        print(self.is_posible_to_place(1,0,3))
+        print(self.is_posible_to_place(z,y,x))
         print("^^^")
 
         # 置かないと必負点となる場所に置く
@@ -204,22 +204,26 @@ class MyAI(Alg3D):
                                 self.cell_important_value_board[0][idx2][3 - idx2] += MyAI.IMP_Z0_2STONES_OPPONENT
 
     def caluculate_importance_by_address(self):
-        self.cell_important_value_board[0][0][0] += MyAI.IMP_ADDRESS
-        self.cell_important_value_board[0][0][3] += MyAI.IMP_ADDRESS
-        self.cell_important_value_board[0][3][0] += MyAI.IMP_ADDRESS
-        self.cell_important_value_board[0][3][3] += MyAI.IMP_ADDRESS
-        self.cell_important_value_board[3][0][0] += MyAI.IMP_ADDRESS
-        self.cell_important_value_board[3][0][3] += MyAI.IMP_ADDRESS
-        self.cell_important_value_board[3][3][0] += MyAI.IMP_ADDRESS
-        self.cell_important_value_board[3][3][3] += MyAI.IMP_ADDRESS
-        self.cell_important_value_board[1][1][1] += MyAI.IMP_ADDRESS
-        self.cell_important_value_board[1][1][2] += MyAI.IMP_ADDRESS
-        self.cell_important_value_board[1][2][1] += MyAI.IMP_ADDRESS
-        self.cell_important_value_board[1][2][2] += MyAI.IMP_ADDRESS
-        self.cell_important_value_board[2][1][1] += MyAI.IMP_ADDRESS
-        self.cell_important_value_board[2][1][2] += MyAI.IMP_ADDRESS
-        self.cell_important_value_board[2][2][1] += MyAI.IMP_ADDRESS
-        self.cell_important_value_board[2][2][2] += MyAI.IMP_ADDRESS
+        add_imp = 0
+        if self.count_stone < 6:
+            add_imp = MyAI.IMP_ENPOWER_FIRST
+        self.cell_important_value_board[0][0][0] += MyAI.IMP_ADDRESS + add_imp
+        self.cell_important_value_board[0][0][3] += MyAI.IMP_ADDRESS + add_imp
+        self.cell_important_value_board[0][3][0] += MyAI.IMP_ADDRESS + add_imp
+        self.cell_important_value_board[0][3][3] += MyAI.IMP_ADDRESS + add_imp
+        self.cell_important_value_board[3][0][0] += MyAI.IMP_ADDRESS + add_imp
+        self.cell_important_value_board[3][0][3] += MyAI.IMP_ADDRESS + add_imp
+        self.cell_important_value_board[3][3][0] += MyAI.IMP_ADDRESS + add_imp
+        self.cell_important_value_board[3][3][3] += MyAI.IMP_ADDRESS + add_imp
+
+        self.cell_important_value_board[1][1][1] += MyAI.IMP_ADDRESS + add_imp
+        self.cell_important_value_board[1][1][2] += MyAI.IMP_ADDRESS + add_imp
+        self.cell_important_value_board[1][2][1] += MyAI.IMP_ADDRESS + add_imp
+        self.cell_important_value_board[1][2][2] += MyAI.IMP_ADDRESS + add_imp
+        self.cell_important_value_board[2][1][1] += MyAI.IMP_ADDRESS + add_imp
+        self.cell_important_value_board[2][1][2] += MyAI.IMP_ADDRESS + add_imp
+        self.cell_important_value_board[2][2][1] += MyAI.IMP_ADDRESS + add_imp
+        self.cell_important_value_board[2][2][2] += MyAI.IMP_ADDRESS + add_imp
     
     def get_most_important(self) -> Tuple[int,int,int]:
         max_imp = 0
@@ -280,6 +284,8 @@ class MyAI(Alg3D):
 
     ############### 一括初期化処理 ################
     def do_initialize(self, board : List[List[List[int]]], player : int):
+        self.stone_count = 0
+        self.count_stone()
         self.cell_important_value_board = []
         self.memoryST_winInstant_3Dpoints = []
         self.memoryST_doubleReach_not_possible_3Dpoints = []
@@ -300,6 +306,7 @@ class MyAI(Alg3D):
     # 自分の手番
     myPlayer : int
     opponentPlayer : int
+    stone_count = 0
 
     # 解析結果後の盤面情報
     # 0:無影響空値 1:自分,2:相手,3:自分即勝利空値,4:相手即勝利空値,5:相手置くことで次自分が勝てる,6:自分が置くことで次相手が勝てる
@@ -308,6 +315,7 @@ class MyAI(Alg3D):
     IMP_Z0_2STONES_MYPLAYER = 10
     IMP_Z0_2STONES_OPPONENT = 20
     IMP_ADDRESS = 5
+    IMP_ENPOWER_FIRST = 20
 
     #物理的着手可能点(z,x,y)
     memoryST_physical_possible_3Dpoints : List[Tuple[int,int,int]] = []
@@ -346,6 +354,18 @@ class MyAI(Alg3D):
         print("test")
 
     ############### 初期化関数群 ################
+    def count_stone(self):
+        cnt = 0
+        for z in range(4):
+            for y in range(4):
+                for x in range(4):
+                    if(self.board[z][y][x] != 0):
+                        cnt = cnt+1
+        self.count_stone
+
+        
+
+
     def init_memoryST_physical_possible_3Dpoints(self):
         self.memoryST_physical_possible_3Dpoints = []
         # @TODO: 高速化：過去の確認結果を踏まえる
