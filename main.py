@@ -14,7 +14,7 @@ class MyAI(Alg3D):
         self.opponentPlayer = 1 if player == 2 else 2    
 
         # テスト用に石を配置するコード(デバッグ用) @TODO コメントアウト
-        self.do_test_put()
+        ##self.do_test_put()
 
         # 初期化
         self.do_initialize(board, player)
@@ -29,7 +29,12 @@ class MyAI(Alg3D):
 
         print("↓うまく機能してない↓")
         print(self.memoryST_loseInstant_3Dpoints)
-        print(self.is_posible_to_place(1,0,2))
+        for z,y,x in self.memoryST_loseInstant_3Dpoints:
+            print(f"{z},{y},{x}")
+            if(z > 0):
+                print(self.board[z-1][y][x])
+
+        print(self.is_posible_to_place(1,0,3))
         print("^^^")
 
         # 置かないと必負点となる場所に置く
@@ -86,6 +91,8 @@ class MyAI(Alg3D):
         print("bbb")
         # 重みづけ最大のところに置く。
         z,y,x = self.get_most_important()
+        print("test1")
+        print(board[z][y][x])
         if(self.is_posible_to_place(z,y,x) == False):
             print(f"{z},{y},{x}はおけない。")
             ## なぜかおけない場合は、下記で配置。
@@ -646,7 +653,7 @@ class MyAI(Alg3D):
                     if(stoneType == self.myPlayer):
                         self.memoryST_winInstant_3Dpoints.append((z,y,x))
                         ##print(f"  -> 勝点の空き座標は(z,y,x)=({z},{y},{x})")
-                    elif(stoneType != self.myPlayer and stoneType != 0):
+                    elif(stoneType == self.opponentPlayer):
                         self.memoryST_loseInstant_3Dpoints.append((z,y,x))
                         ##print(f"  -> 負点の空き座標は(z,y,x)=({z},{y},{x})")
                 elif(cnt == 4):
