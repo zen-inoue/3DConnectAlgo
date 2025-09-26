@@ -1,6 +1,6 @@
 from typing import List, Tuple
-from local_driver import Alg3D, Board # ローカル検証用
-#from framework import Alg3D, Board # 本番用
+#from local_driver import Alg3D, Board # ローカル検証用
+from framework import Alg3D, Board # 本番用
 
 class MyAI(Alg3D):
     def get_move(
@@ -14,7 +14,7 @@ class MyAI(Alg3D):
         self.opponentPlayer = 1 if player == 2 else 2    
 
         # テスト用に石を配置するコード(デバッグ用) @TODO コメントアウト
-        ##self.do_test_put()
+        #self.do_test_put()
 
         # 初期化
         self.do_initialize(board, player)
@@ -828,15 +828,17 @@ class MyAI(Alg3D):
         self.test_put(0, 0)
         self.test_put(3, 0)
         self.test_put(0, 3)
-        self.test_put(0, 1)
         self.test_put(3, 3)
-        self.test_put(1, 1)
-        self.test_put(2, 1)
-        self.test_put(1, 3)
-        self.test_put(1, 0)
-        self.test_put(1, 1)
-        self.test_put(2, 1)
-        self.test_put(1, 1)
-        self.test_put(1, 1)
-        self.test_put(2, 1)
-        self.test_put(2, 1)
+        self.test_put(3, 1)
+        self.test_put(0, 1)
+        self.test_put(0, 0)
+        self.test_put(3, 0)
+        self.test_put(0, 1)
+        self.test_put(3, 1)
+        self.test_put(3, 3)
+        self.test_put(0, 3)
+        self.test_put(0, 0)
+        self.test_put(0, 0)
+        self.test_put(0, 1)
+        self.test_put(0, 1)
+        self.test_put(3, 1)
