@@ -14,7 +14,7 @@ class MyAI(Alg3D):
         self.opponentPlayer = 1 if player == 2 else 2    
 
         # テスト用に石を配置するコード(デバッグ用) @TODO コメントアウト
-        #self.do_test_put()
+        self.do_test_put()
 
         # 初期化
         self.do_initialize(board, player)
@@ -22,6 +22,7 @@ class MyAI(Alg3D):
         # 即置き判断(いわゆるpr0:最優先事項。)
         # 必勝点があればおく。
         if(len(self.memoryST_winInstant_3Dpoints) > 0):
+            z,y,x = self.memoryST_winInstant_3Dpoints[0]
             if(self.is_posible_to_place(z,y,x)):
                 print(f"必勝点に配置します (z,y,x)=({z},{y},{x})")
                 return (x,y)
@@ -799,11 +800,4 @@ class MyAI(Alg3D):
         self.test_put(1, 1)
         self.test_put(1, 1)
         self.test_put(2, 1)
-        self.test_put(3, 1)
         self.test_put(2, 1)
-        self.test_put(3, 1)
-        self.test_put(3, 1)
-#        self.test_put(0, 1)
-
-
-
