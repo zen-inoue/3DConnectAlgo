@@ -1,9 +1,7 @@
-import random
-import importlib.util
 from typing import List, Tuple
-#from local_driver import Alg3D, Board # ローカル検証用
+from local_driver import Alg3D, Board # ローカル検証用
 #from data_memory import memoryLT_winDataForZ0
-from framework import Alg3D, Board # 本番用
+#from framework import Alg3D, Board # 本番用
 
 class MyAI(Alg3D):
     def get_move(
