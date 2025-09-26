@@ -1,6 +1,6 @@
 from typing import List, Tuple
-#from local_driver import Alg3D, Board # ローカル検証用
-from framework import Alg3D, Board # 本番用
+from local_driver import Alg3D, Board # ローカル検証用
+#from framework import Alg3D, Board # 本番用
 
 class MyAI(Alg3D):
     def get_move(
@@ -14,7 +14,7 @@ class MyAI(Alg3D):
         self.opponentPlayer = 1 if player == 2 else 2    
 
         # テスト用に石を配置するコード(デバッグ用) @TODO コメントアウト
-        #self.do_test_put()
+        self.do_test_put()
 
         # 初期化
         self.do_initialize(board, player)
@@ -38,9 +38,10 @@ class MyAI(Alg3D):
             ## instantバグあり 暫定回避 @TODO
             for z,y,x in self.memoryST_loseInstant_3Dpoints:
                 if(self.is_posible_to_place(z,y,x)):
-                    print("aax2")
                     print(f"必敗点を回避するために配置します (z,y,x)=({z},{y},{x})")
-                return (x,y)
+                    return (x,y)
+        
+        print("test1")
         # 置いたら負けるところにはおかない。但し、それが無ければ物理的におけるところに置くしかない。
         # 座標の若いところに置くと自動的に相手が置く可能性が高まることから座標の大きいところに優先的に置く。
         if(len(self.logical_pr1_possible_3Dpoints) == 0):
@@ -49,6 +50,7 @@ class MyAI(Alg3D):
             print(f"物理的着手可能点に配置します (z,y,x)=({z},{y},{x})")
             return (x,y)
         
+        print("ttt")
         # pr1 過去学習結果、勝利確定条件であればその手を打つ。(これは考慮が難しい為実装見送り)
         # pr1-1: z=0の解析結果を使用する。(比較的登場頻度が多いため)
         #        全通りは最大3^16通りありそこからの再起計算かんがえると現実的ではない。
@@ -60,6 +62,7 @@ class MyAI(Alg3D):
         # pr2 自分のダブルリーチ手があれば置く。
         if(len(self.memoryST_doubleReach_possible_3Dpoints) != 0):
             z,y,x = self.place_max(self.memoryST_doubleReach_possible_3Dpoints)
+            
             return (x,y)
         # pr2 相手のダブルリーチを防ぐ
         if(len(self.memoryST_opponent_doubleReach_possible_3Dpoints) != 0):
@@ -220,7 +223,7 @@ class MyAI(Alg3D):
         for z in range(4):
             for y in range(4):
                 for x in range(4):
-                    if self.is_posible_to_place(z,y,x):
+                    if self.is_posible_to_place(z,y,x) and (z,y,x) in self.logical_pr1_possible_3Dpoints:
                         tmp_imp =self.cell_important_value_board[z][y][x]
                         if max_imp < tmp_imp:
                             max_imp = tmp_imp
@@ -723,8 +726,17 @@ class MyAI(Alg3D):
         for z,y,x in self.memoryST_physical_possible_3Dpoints:
             # 自分の勝利点ではない (これは事前に探索済みのため省略)
             # その上(z+1)が相手の勝利着手点ではない。
+         
+            #print("計算確認1↓")
+            #print(self.memoryST_loseInstant_3Dpoints)
+            #print(f"z,y,x={z},{y},{x}")
+            #print("-")
+            #print(self.memoryLT_losing_3Dpoints)
+            #print("^^^")
+         
             if(z < 3):
                 if( (z+1,y,x) in self.memoryST_loseInstant_3Dpoints):
+                    
                     continue
                 if( (z+1,y,x) in self.memoryLT_losing_3Dpoints):
                     continue
@@ -789,32 +801,11 @@ class MyAI(Alg3D):
         self.test_put(1, 1)
         self.test_put(1, 1)
         self.test_put(2, 1)
+        self.test_put(3, 1)
         self.test_put(2, 1)
-        self.test_put(3, 3)
-        self.test_put(3, 3)
-        self.test_put(3, 3)
-        self.test_put(1, 3)
-        self.test_put(1, 3)
-        self.test_put(1, 3)
-        self.test_put(0, 3)
-        self.test_put(0, 3)
-        self.test_put(0, 3)
-        self.test_put(0, 1)
-        self.test_put(0, 1)
-        self.test_put(0, 1)
-        self.test_put(3, 0)
-        self.test_put(3, 0)
-        self.test_put(3, 0)
-        self.test_put(1, 0)
-        self.test_put(1, 0)
-        self.test_put(1, 0)
-        self.test_put(0, 0)
-        self.test_put(0, 0)
-        self.test_put(0, 0)
-        self.test_put(2, 3)
-        self.test_put(2, 0)
-        self.test_put(2, 3)
-        self.test_put(2, 3)
+        self.test_put(3, 1)
+        self.test_put(3, 1)
+#        self.test_put(0, 1)
 
 
 
