@@ -15,7 +15,7 @@ class MyAI(Alg3D):
         self.opponentPlayer = 1 if player == 2 else 2    
 
         # テスト用に石を配置するコード(デバッグ用) @TODO コメントアウト
-        ##self.do_test_put()
+        self.do_test_put()
 
         # 初期化
         self.do_initialize(board, player)
@@ -23,17 +23,25 @@ class MyAI(Alg3D):
         # 即置き判断(いわゆるpr0:最優先事項。)
         # 必勝点があればおく。
         if(len(self.memoryST_winInstant_3Dpoints) > 0):
-            z,y,x = self.memoryST_winInstant_3Dpoints[0]
-            if(self.is_posible_to_place(z,y,x)):
-                print(f"必勝点に配置します (z,y,x)=({z},{y},{x})")
-                return (x,y)
+            ## instantバグあり 暫定回避 @TODO
+            for z,y,x in self.memoryST_winInstant_3Dpoints :
+                if(self.is_posible_to_place(z,y,x)):
+                    print(f"必勝点に配置します (z,y,x)=({z},{y},{x})")
+                    return (x,y)
+
+        print("↓うまく機能してない↓")
+        print(self.memoryST_loseInstant_3Dpoints)
+        print(self.is_posible_to_place(1,0,2))
+        print("^^^")
+
         # 置かないと必負点となる場所に置く
         if(len(self.memoryST_loseInstant_3Dpoints) > 0):
-            z,y,x = self.memoryST_loseInstant_3Dpoints[0]
-            if(self.is_posible_to_place(z,y,x)):
-                print(f"必敗点を回避するために配置します (z,y,x)=({z},{y},{x})")
+            ## instantバグあり 暫定回避 @TODO
+            for z,y,x in self.memoryST_loseInstant_3Dpoints:
+                if(self.is_posible_to_place(z,y,x)):
+                    print("aax2")
+                    print(f"必敗点を回避するために配置します (z,y,x)=({z},{y},{x})")
                 return (x,y)
-
         # 置いたら負けるところにはおかない。但し、それが無ければ物理的におけるところに置くしかない。
         # 座標の若いところに置くと自動的に相手が置く可能性が高まることから座標の大きいところに優先的に置く。
         if(len(self.logical_pr1_possible_3Dpoints) == 0):
@@ -764,26 +772,46 @@ class MyAI(Alg3D):
 
     # x,yを渡してboardに石を配置するテスト用プログラム。
     def do_test_put(self):
-        self.test_put(1,0)
-        self.test_put(1,0)
-        self.test_put(2,0)
-        self.test_put(2,0)
-        self.test_put(0,1)
-        self.test_put(0,1)
-        self.test_put(0,2)
-        self.test_put(0,2)
-        self.test_put(3,3)
-        self.test_put(0,3)
-        self.test_put(3,3)
-        self.test_put(3,3)
-        self.test_put(2,2)
-        self.test_put(2,0)
-        self.test_put(2,2)
-        self.test_put(3,0)
-        self.test_put(3,1)
-        self.test_put(0,0)
-        self.test_put(3,1)
-
+        self.test_put(0, 0)
+        self.test_put(3, 0)
+        self.test_put(0, 3)
+        self.test_put(0, 1)
+        self.test_put(3, 3)
+        self.test_put(1, 1)
+        self.test_put(2, 1)
+        self.test_put(1, 3)
+        self.test_put(1, 0)
+        self.test_put(1, 1)
+        self.test_put(2, 1)
+        self.test_put(1, 1)
+        self.test_put(1, 1)
+        self.test_put(2, 1)
+        self.test_put(2, 1)
+        self.test_put(3, 3)
+        self.test_put(3, 3)
+        self.test_put(3, 3)
+        self.test_put(1, 3)
+        self.test_put(1, 3)
+        self.test_put(1, 3)
+        self.test_put(0, 3)
+        self.test_put(0, 3)
+        self.test_put(0, 3)
+        self.test_put(0, 1)
+        self.test_put(0, 1)
+        self.test_put(0, 1)
+        self.test_put(3, 0)
+        self.test_put(3, 0)
+        self.test_put(3, 0)
+        self.test_put(1, 0)
+        self.test_put(1, 0)
+        self.test_put(1, 0)
+        self.test_put(0, 0)
+        self.test_put(0, 0)
+        self.test_put(0, 0)
+        self.test_put(2, 3)
+        self.test_put(2, 0)
+        self.test_put(2, 3)
+        self.test_put(2, 3)
 
 
 
