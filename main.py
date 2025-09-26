@@ -1,6 +1,6 @@
 from typing import List, Tuple
-#from local_driver import Alg3D, Board # ローカル検証用
-from framework import Alg3D, Board # 本番用
+from local_driver import Alg3D, Board # ローカル検証用
+#from framework import Alg3D, Board # 本番用
 
 class MyAI(Alg3D):
     def get_move(
@@ -34,8 +34,6 @@ class MyAI(Alg3D):
             if(z > 0):
                 print(self.board[z-1][y][x])
 
-        print(self.is_posible_to_place(z,y,x))
-        print("^^^")
 
         # 置かないと必負点となる場所に置く
         if(len(self.memoryST_loseInstant_3Dpoints) > 0):
@@ -361,7 +359,7 @@ class MyAI(Alg3D):
                 for x in range(4):
                     if(self.board[z][y][x] != 0):
                         cnt = cnt+1
-        self.count_stone
+        self.count_stone = cnt
 
         
 
